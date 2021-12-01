@@ -8,20 +8,13 @@
 //  - A sandbox to experiment with different compiler features of TypeScript
 
 
-let img_1 = ['i','m','g','1'];
-
-let hex_1 = ['h','e','x','1'];
-
-let img_2 = ['i','m','g','2'];
-
-let hex_2 = ['h','e','x','2'];
 
 // To learn more about the language, click above in "Examples" or "What's New".
 // Otherwise, get started by removing these comments and the world is your playground.
 
 type PackratConnection = {
-    status: 'success' | 'server not found'| 'connect failed';
-    info: string;
+    status: number;
+    detail?: string;
 }
 
 type BlobFile = {
@@ -29,12 +22,25 @@ type BlobFile = {
     content: Blob;
 }
 
-type PackratList = {
-    message: 'success' | 'server not found'| 'packrat not exist' | string;
+type PackratListType = {
+    status: number;
+    detail?: string;
     list: string[]
 }
 
-function GetList(packrat: number): PackratList {
+type PackratBlobType = {
+    status: number;
+    detail?: string;
+    list: BlobFile[]
+}
+
+type PackratFormDataType = {
+    status: number;
+    detail?: string;
+    formdata: FormData
+}
+
+function GetList(packrat: number): PackratListType {
     console.log("packrat:", packrat);
 
     let list = [
@@ -44,17 +50,17 @@ function GetList(packrat: number): PackratList {
     ]
 
     return {
-        message: 'success',
+        status: 0,
         list: list
     };
 }
 
-function DownloadBlob(packrat: number, files: string[]): BlobFile[] {
+function DownloadBlob(packrat: number, files: string[]): PackratBlobType {
     console.log('DownloadBlob...');
     console.log(packrat);
 
     let list: BlobFile[] = [];
-
+    let info = '';
 
     files.map(value => 
         {
@@ -76,7 +82,8 @@ function DownloadBlob(packrat: number, files: string[]): BlobFile[] {
             else
             {
                 found = false;
-                console.log(value, " not found");
+                //console.log(value, " not found");
+                info += (value + " not found")
             }
 
             if (found)
@@ -87,15 +94,19 @@ function DownloadBlob(packrat: number, files: string[]): BlobFile[] {
         }
     )
 
-    return list;
+    return {
+        status: 0,
+        list: list
+    };
 }
 
 
-function DownloadFormData(packrat: number, files: string[]): FormData {
+function DownloadFormData(packrat: number, files: string[]): PackratFormDataType {
     console.log('DownloadFormData...');
     console.log(packrat);
 
     let data = new FormData();
+    let info = '';
 
     files.map(value => 
         {
@@ -117,7 +128,8 @@ function DownloadFormData(packrat: number, files: string[]): FormData {
             else
             {
                 found = false;
-                console.log(value, " not found");
+                //console.log(value, " not found");
+                info += (value + " not found")
             }
 
             if (found)
@@ -127,7 +139,11 @@ function DownloadFormData(packrat: number, files: string[]): FormData {
         }
     )
 
-    return data;
+    return {
+        status: 0,
+        detail: info,
+        formdata: data
+    };
 }
 
 
@@ -137,8 +153,8 @@ function Connect(): PackratConnection{
 
     let info: PackratConnection = 
     {
-        status:'success',
-        info:'url:xxxx'
+        status: 0,
+        detail:'url:xxxx'
     }
 
     return info;
@@ -149,15 +165,17 @@ function Disconnect(): void {
 }
 
 
+let connect_status = Connect();
+console.log(connect_status);
 
 let packrat_number = 3080091;
-let connect_status = Connect();
-let packrat_list = GetList(packrat_number);
-console.log(packrat_list);
+const list_result = GetList(packrat_number);
+console.log(list_result);
 
 
-let files = DownloadBlob(packrat_number, packrat_list.list);
-files.map(value => {
+const blob_result = DownloadBlob(packrat_number, list_result.list);
+console.log(blob_result.detail);
+blob_result.list.map(value => {
     console.log(value.name);
     value.content.text().then(x => { 
         console.log(x)
@@ -165,8 +183,11 @@ files.map(value => {
 })
 
 
-let data = DownloadFormData(packrat_number, packrat_list.list);
-for (var pair of data.entries()) {
+const formdata_result = DownloadFormData(packrat_number, list_result.list);
+console.log(formdata_result.detail);
+for (var pair of formdata_result.formdata.entries()) {
+    // pair[0]: filename
+    // pair[1]: blob
     let blob = pair[1] as Blob;
     console.log(pair[0]);
     blob.text().then(x => {
@@ -174,4 +195,5 @@ for (var pair of data.entries()) {
     })
 }
 
+// disconnect
 Disconnect();
