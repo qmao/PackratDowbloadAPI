@@ -19,7 +19,7 @@ let hex_2 = ['h','e','x','2'];
 // To learn more about the language, click above in "Examples" or "What's New".
 // Otherwise, get started by removing these comments and the world is your playground.
 
-type PackratConnectionStatus = {
+type PackratConnection = {
     status: 'success' | 'server not found'| 'connect failed';
     info: string;
 }
@@ -29,7 +29,12 @@ type BlobFile = {
     content: Blob;
 }
 
-function GetList(packrat: number): string[] {
+type PackratList = {
+    message: 'success' | 'server not found'| 'packrat not exist' | string;
+    list: string[]
+}
+
+function GetList(packrat: number): PackratList {
     console.log("packrat:", packrat);
 
     let list = [
@@ -38,7 +43,10 @@ function GetList(packrat: number): string[] {
         '111.json'
     ]
 
-    return list;
+    return {
+        message: 'success',
+        list: list
+    };
 }
 
 function DownloadBlob(packrat: number, files: string[]): BlobFile[] {
@@ -123,11 +131,11 @@ function DownloadFormData(packrat: number, files: string[]): FormData {
 }
 
 
-function Connect(): PackratConnectionStatus{
+function Connect(): PackratConnection{
     
     console.log('Connect...');
 
-    let info: PackratConnectionStatus = 
+    let info: PackratConnection = 
     {
         status:'success',
         info:'url:xxxx'
@@ -144,11 +152,11 @@ function Disconnect(): void {
 
 let packrat_number = 3080091;
 let connect_status = Connect();
-let list = GetList(packrat_number);
-console.log(list);
+let packrat_list = GetList(packrat_number);
+console.log(packrat_list);
 
 
-let files = DownloadBlob(packrat_number, list);
+let files = DownloadBlob(packrat_number, packrat_list.list);
 files.map(value => {
     console.log(value.name);
     value.content.text().then(x => { 
@@ -157,7 +165,7 @@ files.map(value => {
 })
 
 
-let data = DownloadFormData(packrat_number, list);
+let data = DownloadFormData(packrat_number, packrat_list.list);
 for (var pair of data.entries()) {
     let blob = pair[1] as Blob;
     console.log(pair[0]);
